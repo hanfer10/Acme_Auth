@@ -17,6 +17,13 @@ const User = conn.define('user', {
   password: STRING
 });
 
+const Note = conn.define('note', {
+  text: STRING,
+})
+
+Note.belongsTo(User)
+User.hasMany(Note)
+
 const hashPassword = async (password) => {
   const SALT_COUNT = 5
   const hashedPWD = await bcrypt.hash(password, SALT_COUNT)
@@ -69,9 +76,20 @@ const syncAndSeed = async()=> {
     { username: 'moe', password: 'moe_pw'},
     { username: 'larry', password: 'larry_pw'}
   ];
+  const notes = [
+    {text: 'Hello World'},
+    {text: 'Task note for moe'},
+    {text: 'Love letter for lucy'},
+  ]
   const [lucy, moe, larry] = await Promise.all(
     credentials.map( credential => User.create(credential))
   );
+  const [welcome, task, letter] = await Promise.all(
+    notes.map(note => Note.create(note))
+  )
+  await moe.setNotes([welcome, task])
+  await lucy.setNotes(letter)
+
   console.log("database seeded");
   return {
     users: {
@@ -85,6 +103,7 @@ const syncAndSeed = async()=> {
 module.exports = {
   syncAndSeed,
   models: {
-    User
+    User,
+    Note
   }
 };
